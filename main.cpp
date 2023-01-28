@@ -1,9 +1,13 @@
+#include <cstddef>
 #include <iostream>
 #include <vector>
 
 #include "lib/compress.hpp"
 #include "lib/fixquat.hpp"
 #include "lib/quant.hpp"
+
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <cstring>
 
@@ -79,25 +83,66 @@ size_t write_accel_data(int16_t const* acc_data, size_t n_acc_data, uint8_t* out
     return n_acc_data * 6 + 2;
 }
 
-int main() {
+std::vector<quat::quat> load_raw_q(char const* path) {
     std::vector<quat::quat> quats;
-
-    quat::quat q{};
-    for (int i = 0; i < 1000; ++i) {
-        quats.push_back(q);
-        q = q * quat::quat(
-                    quat::vec(quat::base_type{0.01}, quat::base_type{0.005}, quat::base_type{0.0}));
+    int fd = open(path, O_RDONLY);
+    char buf[sizeof(quat::quat) * 1024];
+    int nread{};
+    while ((nread = read(fd, buf, sizeof(buf))) > 0) {
+        for (int i = 0; i < nread / sizeof(quat::quat); ++i) {
+            quats.push_back(((quat::quat*)buf)[i]);
+        }
     }
+    std::cout << quats.size() << std::endl;
+    return quats;
+}
 
-    uint8_t data[8192];
-    int8_t scratch[8192];
+int main() {
+    std::vector<quat::quat> quats = load_raw_q("test.rawquat");
+
+    // quat::quat q{};
+    // for (int i = 0; i < 1000; ++i) {
+    //     quats.push_back(q);
+    //     q = q * quat::quat(
+    //                 quat::vec(quat::base_type{0.01}, quat::base_type{0.005},
+    //                 quat::base_type{0.0}));
+    // }
+
+    // quat::quat q{};
+    // for (int i = 1; i < 1000; ++i) {
+    //     std::cout << (double)(quats[i - 1] * quats[i].conj()).axis_angle().norm() << std::endl;
+    //     q = q * quat::quat(
+    //                 quat::vec(quat::base_type{0.01}, quat::base_type{0.005},
+    //                 quat::base_type{0.0}));
+    // }
+
+    // return 0;
+
+    int f = open("compressed.bin", O_CREAT | O_WRONLY | O_TRUNC, 0777);
+    int f2 = open("quanted.bin", O_CREAT | O_WRONLY | O_TRUNC, 0777);
 
     quant::State state{};
-    auto res = compress::compress_block(state, quats.data(), quats.size(), 14, data, sizeof(data),
-                                        scratch, sizeof(scratch));
+    uint8_t data[8192];
+    int8_t scratch[8192];
+    size_t bytes_tot{};
+    size_t qbytes_tot{};
+    static constexpr size_t chunk = 512;
+    for (size_t i = 0; i< quats.size() / chunk; ++i) {
+        auto res = compress::compress_block(state, quats.data() + i * chunk, chunk, 14, data, sizeof(data),
+                                            scratch, sizeof(scratch));
+        write(f, data, res.bytes_put);
+        write(f2, scratch, res.dbg_qbytes);
+        state = res.new_state;
+        bytes_tot += res.bytes_put;
+        qbytes_tot += res.dbg_qbytes;
+        std::cout << "success:   " << res.success << std::endl;
+        std::cout << "bytes_put: " << res.bytes_put << std::endl;
+    }
 
-    std::cout << "success:   " << res.success << std::endl;
-    std::cout << "bytes_put: " << res.bytes_put << std::endl;
+    close(f);
+
+    std::cout << bytes_tot << std::endl;
+    std::cout << qbytes_tot << std::endl;
 
     return 0;
 }

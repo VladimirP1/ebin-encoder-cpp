@@ -6,6 +6,7 @@ struct CompressResult {
     bool success{};
     quant::State new_state{};
     size_t bytes_put{};
+    size_t dbg_qbytes{};
 };
 
 struct DecompressResult {

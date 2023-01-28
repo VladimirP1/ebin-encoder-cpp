@@ -47,13 +47,14 @@ CompressResult compress_block(quant::State state, quat::quat const* quats, size_
     int i_var{};
     uint8_t cksum{};
     {
-        uint64_t sum = 0;
+        int64_t sum = 0;
         for (size_t i = 0; i < quant_result.bytes_put; ++i) {
-            sum += scratch[i] * scratch[i];
+            sum += (int64_t)scratch[i] * (int64_t)scratch[i];
             cksum += (uint8_t)scratch[i];
         }
         i_var = model::var_to_ivar(double(sum) / quant_result.bytes_put);
     }
+    i_var = 2;
 
     size_t rans_result = rans_encode(scratch, quant_result.bytes_put, data + 2, n_data - 2, i_var);
     if (rans_result == 0) {
@@ -63,7 +64,10 @@ CompressResult compress_block(quant::State state, quat::quat const* quats, size_
     data[0] = qp;
     data[1] = (i_var) | (cksum << 5);
 
-    return CompressResult{.success = true, .new_state = state, .bytes_put = rans_result + 2};
+    return CompressResult{.success = true,
+                          .new_state = quant_result.new_state,
+                          .bytes_put = rans_result + 2,
+                          .dbg_qbytes = quant_result.bytes_put};
 }
 
 DecompressResult decompress_block(quant::State state, uint8_t const* data, size_t n_data,

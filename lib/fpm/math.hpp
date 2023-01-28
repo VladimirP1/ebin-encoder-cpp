@@ -537,7 +537,7 @@ fixed<B, I, F> sin(fixed<B, I, F> x) noexcept
     }
 
     const Fixed x2 = x*x;
-    return sign * x * (Fixed::pi() - x2*(Fixed::two_pi() - 5 - x2*(Fixed::pi() - 3)))/2;
+    return sign * x * (Fixed::pi() - x2*(Fixed::two_pi() - 5 - x2*(Fixed::pi() - 3)))/Fixed{2};
 }
 
 template <typename B, typename I, unsigned int F>
