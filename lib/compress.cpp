@@ -54,7 +54,6 @@ CompressResult compress_block(quant::State state, quat::quat const* quats, size_
         }
         i_var = model::var_to_ivar(double(sum) / quant_result.bytes_put);
     }
-    i_var = 2;
 
     size_t rans_result = rans_encode(scratch, quant_result.bytes_put, data + 2, n_data - 2, i_var);
     if (rans_result == 0) {
