@@ -1,6 +1,8 @@
 #include "writer.hpp"
 #include "compress.hpp"
 
+#include <limits>
+
 namespace writer {
 size_t write_header(uint8_t* out, size_t n_out) {
     if (n_out < 7) {
@@ -68,8 +70,11 @@ size_t write_accel_data(int16_t const* acc_data, size_t n_acc_data, uint8_t* out
     }
     out[0] = 5;  // block id
     for (size_t i = 0; i < 3 * n_acc_data; ++i) {
-        out[1 + 2 * i] = (acc_data[i] >> 0) & 0xff;
-        out[1 + 2 * i + 1] = (acc_data[i] >> 8) & 0xff;
+        int16_t v = acc_data[i];
+        if (v == std::numeric_limits<int16_t>::min())
+            v = -std::numeric_limits<int16_t>::max();
+        out[1 + 2 * i] = (v >> 0) & 0xff;
+        out[1 + 2 * i + 1] = (v >> 8) & 0xff;
     }
     return n_acc_data * 6 + 1;
 }
