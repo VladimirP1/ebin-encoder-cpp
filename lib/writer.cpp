@@ -52,13 +52,14 @@ size_t write_gyro_data(quant::State& state, quat::quat const* quats, size_t n_qu
     return res.bytes_put + 1;
 }
 
-size_t write_accel_setup(uint8_t accel_range, uint8_t* out, size_t n_out) {
-    if (n_out < 2) {
+size_t write_accel_setup(uint8_t block_size, uint8_t accel_range, uint8_t* out, size_t n_out) {
+    if (n_out < 3) {
         return 0;
     }
     out[0] = 4;  // block id
-    out[1] = accel_range;
-    return 2;
+    out[1] = block_size;
+    out[2] = accel_range;
+    return 3;
 }
 
 size_t write_accel_data(int16_t const* acc_data, size_t n_acc_data, uint8_t* out, size_t n_out) {
@@ -66,10 +67,9 @@ size_t write_accel_data(int16_t const* acc_data, size_t n_acc_data, uint8_t* out
         return 0;
     }
     out[0] = 5;  // block id
-    out[1] = n_acc_data;
     for (size_t i = 0; i < 3 * n_acc_data; ++i) {
-        out[2 + 2 * i] = (acc_data[i] >> 0) & 0xff;
-        out[2 + 2 * i + 1] = (acc_data[i] >> 8) & 0xff;
+        out[1 + 2 * i] = (acc_data[i] >> 0) & 0xff;
+        out[1 + 2 * i + 1] = (acc_data[i] >> 8) & 0xff;
     }
     return n_acc_data * 6 + 2;
 }
