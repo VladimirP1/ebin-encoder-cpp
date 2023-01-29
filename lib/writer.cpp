@@ -71,6 +71,6 @@ size_t write_accel_data(int16_t const* acc_data, size_t n_acc_data, uint8_t* out
         out[1 + 2 * i] = (acc_data[i] >> 0) & 0xff;
         out[1 + 2 * i + 1] = (acc_data[i] >> 8) & 0xff;
     }
-    return n_acc_data * 6 + 2;
+    return n_acc_data * 6 + 1;
 }
 }  // namespace writer
