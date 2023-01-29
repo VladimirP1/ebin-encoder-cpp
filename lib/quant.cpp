@@ -10,9 +10,9 @@ static inline single_update quant_update(quat::vec update, int8_t scale) {
     int8_t uz = update.z.raw_value() >> scale;
 
     using T = decltype(update.x);
-    if (ux != (update.x.raw_value() >> scale)) ux = update.x < T{0} ? -127 : 127;
-    if (uy != (update.y.raw_value() >> scale)) uy = update.y < T{0} ? -127 : 127;
-    if (uz != (update.z.raw_value() >> scale)) uz = update.z < T{0} ? -127 : 127;
+    if (ux != (update.x.raw_value() >> scale) || ux == -128) ux = update.x < T{0} ? -127 : 127;
+    if (uy != (update.y.raw_value() >> scale) || uy == -128) uy = update.y < T{0} ? -127 : 127;
+    if (uz != (update.z.raw_value() >> scale) || uz == -128) uz = update.z < T{0} ? -127 : 127;
     return single_update{ux, uy, uz};
 }
 
