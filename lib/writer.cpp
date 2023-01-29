@@ -73,4 +73,27 @@ size_t write_accel_data(int16_t const* acc_data, size_t n_acc_data, uint8_t* out
     }
     return n_acc_data * 6 + 1;
 }
+
+size_t write_global_time(int32_t ofs_us, uint8_t* out, size_t n_out) {
+    if (n_out < 5) {
+        return 0;
+    }
+    out[0] = 0x06;  // block id
+    out[1] = (((uint32_t)ofs_us) >> 0) & 0xff;
+    out[2] = (((uint32_t)ofs_us) >> 8) & 0xff;
+    out[3] = (((uint32_t)ofs_us) >> 16) & 0xff;
+    out[4] = (((uint32_t)ofs_us) >> 24) & 0xff;
+    return 5;
+}
+
+size_t write_imu_orient(char const* orient, uint8_t* out, size_t n_out) {
+    if (n_out < 4) {
+        return 0;
+    }
+    out[0] = 0x07;  // block id
+    out[1] = orient[0];
+    out[2] = orient[1];
+    out[3] = orient[2];
+    return 4;
+}
 }  // namespace writer
